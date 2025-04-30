@@ -4,8 +4,6 @@ from typing import Annotated
 import json
 from query_params import Transaction
 
-
-
 bank_clients = []
 
 app = FastAPI()

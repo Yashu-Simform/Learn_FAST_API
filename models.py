@@ -6,6 +6,6 @@ class BankClient(BaseModel):
     password: str = Field(
         default=None,
         min_length= 8,
-        max_length=12
+        max_length=12,
     )
     name: str
