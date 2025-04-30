@@ -1,13 +1,10 @@
 from fastapi import FastAPI, Body, Query
-from pydantic import BaseModel, EmailStr
+from models import BankClient
 from typing import Annotated
 import json
+from query_params import Transaction
 
-class BankClient(BaseModel):
-    username: str
-    email: EmailStr
-    password: str
-    name: str
+
 
 bank_clients = []
 
@@ -33,6 +30,11 @@ def create_client(client: BankClient, account_type: Annotated[str, Body()]):
     print('Account_type: ',account_type)
     add_client_data(client)
     return client
+
+
+@app.get('/transaction')
+def get_transaction(t: Annotated[Transaction, Query()]):
+    return {'status': 200, 'data': t.model_dump()}
 
 
 # File operations related to data storage
