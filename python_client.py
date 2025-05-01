@@ -1,6 +1,9 @@
 import requests
 import asyncio
 from getpass import getpass
+from email_validator import validate_email
+
+BASE_URL = 'http://127.0.0.1:8000'
 
 def callAPI(p_url, method = 'GET', *args, **kwargs):
     method_map = {
@@ -34,18 +37,49 @@ def getAuthenticate():
 
 # def view_teachers_list():
 
-def main():
-    BASE_URL = 'http://127.0.0.1:8000'
-    body = {
-        'client':{
-            'username': '@yashu1',
-            'email': 'yashu1@gmail.com',
-            'password': 'yashu1@123',
-            'name': 'yashu'
-        },
-        'account_type': 'savings'
+def user_registration():
+    username = input('Enter the Username: ')
+    email = input('Enter you email address: ')
+    try:
+        email = validate_email(email).email
+    except Exception as e:
+        print('Got error: ', e)
+
+    password = input(
+        '''Enter password:
+            [Password must contain at least 1 Uppercase, 1 Lowercase and 1 special character.]
+        '''
+        )
+    first_name = input('Enter first name: ')
+    last_name = input('Enter last name: ')
+
+    req_body = {
+        "username": username,
+        "email": email,
+        "password": password,
+        "first_name": first_name,
+        "last_name": last_name
     }
-    callAPI(f'{BASE_URL}/create/client/', 'POST', json=body)
+    print(req_body)
+
+    res = callAPI(f'{BASE_URL}/user/register/', 'POST', json=req_body)
+    print(res)
+
+
+
+def main():
+    # body = {
+    #     'client':{
+    #         'username': '@yashu1',
+    #         'email': 'yashu1@gmail.com',
+    #         'password': 'yashu1@123',
+    #         'name': 'yashu'
+    #     },
+    #     'account_type': 'savings'
+    # }
+    # callAPI(f'{BASE_URL}/create/client/', 'POST', json=body)
+
+    user_registration()
 
 main()
 

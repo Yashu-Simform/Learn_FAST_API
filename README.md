@@ -59,6 +59,8 @@
         app = FastAPI()
     ```
 
+-   Anomaly: DRF Serializer <-> Pydantic module
+
 ### Pydantic
 -   It is used in order to validate the data and convert it to the appropriate data type annotated using type hints.
 -   Some hiearchy to note:
@@ -70,6 +72,58 @@
         Level-2     Path, Query
     ```
 -   Function named Field also returns the FieldInfo class.
+-   FastAPI uses Pydantic in order to provide the type checking for any variable or data throughout the program.
+-   We can declare the models using pydantic's BaseModel class which allow us to define the TypedDict which will be served as Model having attributes.
+-   Example:
+    ```
+        from pydantic import BaseModel
+
+        class BankClient(BaseModel):
+            username: str
+            email: EmailStr
+            password: str = Field(
+                default=None,
+                min_length= 8,
+                max_length=12,
+            )
+            name: str
+    ```
+-   we can define any validation and any specific field related to our required attributes inside the model.
+-   This model will be used in order to form the JSON Schema where API request data or response data will be handled accordingly.
+-   We can add any metadata or extra fields to the JSON Schema that is going to be formed by the openAPI,
+    -   Example:
+        ```
+            from fastapi import FastAPI
+            from pydantic import BaseModel
+
+            app = FastAPI()
+
+
+            class Item(BaseModel):
+                name: str
+                description: str | None = None
+                price: float
+                tax: float | None = None
+
+                model_config = {
+                    "json_schema_extra": {
+                        "examples": [
+                            {
+                                "name": "Foo",
+                                "description": "A very nice Item",
+                                "price": 35.4,
+                                "tax": 3.2,
+                            }
+                        ]
+                    }
+                }
+
+
+            @app.put("/items/{item_id}")
+            async def update_item(item_id: int, item: Item):
+                results = {"item_id": item_id, "item": item}
+                return results
+        ```
 
 ### Path Parameter
 -   Parameters which are explicitly mentioned in the path as a part of the path, and indicating that the param must be included as any value while hitting the URL.
@@ -251,3 +305,138 @@ async def read_items(
 ```
 
 -   <b>Note: </b> Here Body, Query and Path which we have imported from fastapi class are actually functions which on called returns the instance of the respective classes of the same name.
+
+### Response data in FastAPI
+-   In fastapi, we can declare the type of the data that we want to return or give as response to client.
+-   Example,
+    ```
+        from fastapi import FastAPI
+        from pydantic import BaseModel
+
+        app = FastAPI()
+
+
+        class Item(BaseModel):
+            name: str
+            description: str | None = None
+            price: float
+            tax: float | None = None
+            tags: list[str] = []
+
+
+        @app.post("/items/")
+        async def create_item(item: Item) -> Item:
+            return item
+
+
+        @app.get("/items/")
+        async def read_items() -> list[Item]:
+            return [
+                Item(name="Portal Gun", price=42.0),
+                Item(name="Plumbus", price=32.0),
+            ]
+    ```
+-   Now when data is returned it will be checked and validated before sending it to the client.
+-   We can use the 'response_model' paramater of the path operation decorator and can mention the type of data we want to respond.
+-   function return type vs response_model, which one to use and when to use ?
+    -   When we decalre the return type of the path operation function as any specific type say any Pydantic Model Item, it will check the type of the returned data and if types matches then apply validations for attributes.
+    -   Whereas while using response_model we can declare the Pydantic model and it will not matches the types directly, instead it tries to form the data as per the specified Pydantic model or any other type mentioned with the response_model.
+    -   Example: 
+        ```
+            from typing import Any
+
+            from fastapi import FastAPI
+            from pydantic import BaseModel, EmailStr
+
+            app = FastAPI()
+
+
+            class UserIn(BaseModel):
+                username: str
+                password: str
+                email: EmailStr
+                full_name: str | None = None
+
+
+            class UserOut(BaseModel):
+                username: str
+                email: EmailStr
+                full_name: str | None = None
+
+
+            @app.post("/user/", response_model=UserOut)
+            async def create_user(user: UserIn) -> Any:
+                return user
+        ```
+    -   Specifying Function return type as response tye:
+        -   Will give support to editors and tools to check and validate that the data we are sending is as per the expected response type.
+        -   Helps to validate the data we are trying to give as response to the client.
+
+    -   Specifying response_model parameter:
+        -   Will allow us to filter the data and return the response with the specific attributes only.
+        -   Will have more priority than the return type of the function.
+        -   Thus if we have mentioned both function return type and response_model the  incorrect return type of data will not going to produce any error by editors or tools as response_model has higher priority.    
+        - In order to overcome this we can do:
+            ```
+                from fastapi import FastAPI
+                from pydantic import BaseModel, EmailStr
+
+                app = FastAPI()
+
+
+                class BaseUser(BaseModel):
+                    username: str
+                    email: EmailStr
+                    full_name: str | None = None
+
+
+                class UserIn(BaseUser):
+                    password: str
+
+
+                @app.post("/user/")
+                async def create_user(user: UserIn) -> BaseUser:
+                    return user
+            ```
+
+- In sort, by specifying the return type of th response FastAPI by using Pydantic will filter the response data if needed and validate it before sending it to the client.
+
+
+### Form 
+-   We can declare the form params individually in path operation functions or we can make a pydantic model to group all the required fields and make a single model as form to take the request form data.
+
+-   File as Input in forms:
+    -   File() is used to declare the parameter as File Input in Form data. 
+    -   File() is similar to Query, Path, etc.
+    -   Hiearchy: Body(Parent) -> Form -> File
+    -   Using bytes
+        -   we can get file as input as binary data which will be stored in main memory.
+        -   Thus we can take small files as input using bytes data type
+
+    -   Using UploadFile,
+        -   Using UploadFile the files can be stored in main memory until a limit, and when this limit exceed it will get stored in disk.
+        -   We can upload large files like images, videos, etc.
+        -   This is governed by the SpooledTemporaryFile which has the method named rollover(), which allows the file to get stored in main memory until the specified storage limit and when this storage limit exceed rollover() method is used to write this file content to the disk.
+        -   UploadFile object has attributes:
+            -   filename: str
+            -   content_type: str
+            -   file: SpooledTemporaryFile, this is the actual file object of python
+
+    -   Example:
+        ```
+            from typing import Annotated
+
+            from fastapi import FastAPI, File, UploadFile
+
+            app = FastAPI()
+
+
+            @app.post("/files/")
+            async def create_file(file: Annotated[bytes, File()]):
+                return {"file_size": len(file)}
+
+
+            @app.post("/uploadfile/")
+            async def create_upload_file(file: UploadFile):
+                return {"filename": file.filename}
+        ``` 

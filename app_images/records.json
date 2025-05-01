@@ -1,0 +1,37 @@
+[
+    {
+        "name": "Aarav Shah",
+        "email": "aarav.shah@example.com",
+        "password": "p@ssword123",
+        "city": "Ahmedabad",
+        "stu_class": 5
+    },
+    {
+        "name": "Diya Patel",
+        "email": "diya.patel@example.com",
+        "password": "secure123",
+        "city": "Surat",
+        "stu_class": 10
+    },
+    {
+        "name": "Kabir Mehta",
+        "email": "kabir.mehta@example.com",
+        "password": "mypassword01",
+        "city": "Vadodara",
+        "stu_class": 7
+    },
+    {
+        "name": "Ishani Desai",
+        "email": "ishani.desai@example.com",
+        "password": "password98",
+        "city": "Rajkot",
+        "stu_class": 3
+    },
+    {
+        "name": "Riya Trivedi",
+        "email": "riya.trivedi@example.com",
+        "password": "helloWorld21",
+        "city": "Gandhinagar",
+        "stu_class": 12
+    }
+]
