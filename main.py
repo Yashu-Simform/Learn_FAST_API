@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Body, Query, Response, status, Form, File, UploadFile, HTTPException, Path
+from fastapi import FastAPI, Body, Query, Response, status, Form, File, UploadFile, HTTPException, Path, Depends
 from fastapi.responses import JSONResponse
 from models import BankClient, BankClientUpdate
 from typing import Annotated
