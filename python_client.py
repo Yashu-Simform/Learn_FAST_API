@@ -66,6 +66,17 @@ def user_registration():
     print(res)
 
 
+def update_client_data():
+    update_data = {
+        "email": "yashu.ranparia@simformsolutions.com",
+        "name": "Yashu",
+        "password": "********",
+        "username": "@yashu123"
+        }
+    
+    res = callAPI('http://127.0.0.1:8000/update/client/0', 'PUT', json=update_data)
+    print(res)
+
 
 def main():
     # body = {
@@ -79,7 +90,8 @@ def main():
     # }
     # callAPI(f'{BASE_URL}/create/client/', 'POST', json=body)
 
-    user_registration()
+    # user_registration()
+    update_client_data()
 
 main()
 

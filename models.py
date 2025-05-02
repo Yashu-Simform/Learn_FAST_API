@@ -28,6 +28,16 @@ class BankClient(BaseModel):
         }
     }
 
+class BankClientUpdate(BankClient):
+    username: str = None
+    email: EmailStr = None
+    password: str = Field(
+        default=None,
+        min_length= 8,
+        max_length=12,
+    )
+    name: str = None
+
 
 class UserBase(BaseModel):
     username: str

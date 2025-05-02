@@ -440,3 +440,120 @@ async def read_items(
             async def create_upload_file(file: UploadFile):
                 return {"filename": file.filename}
         ``` 
+
+#### JSON Compatible encoder
+-   Available at: `from fastapi.encoder import jsonable_encoder`
+-   We can use the jsonable_encoder in order to convert the objects in to the json acceptable format.
+-   NOTE: jsonable_encoder() returns a standard python data structures like dict(), etc which can be accepted as JSON data.
+
+
+### Dependency Injection
+-   Dependency Injection is a way through which any working unit(say a function) can declare its requirements or dependent things required to work, and a system (FastAPI) can provide these dependencies if it is available with in the system environment.
+-   It simply tells you framework that something else need to be executed before the actual path operation function.
+-   Or in other words the path operation function depends on some other things which need to be executed and provided to it.
+-   A function called `Depend` is available in fastapi, which we can use in order to declare the dependencies that a path operation function has.
+-   You have to pass a function or anything which can be 'callable' in python to this function `Depened`.
+-   Example:
+    ```
+        from typing import Annotated
+
+        from fastapi import Depends, FastAPI
+
+        app = FastAPI()
+
+
+        async def common_parameters(q: str | None = None, skip: int = 0, limit: int = 100):
+            return {"q": q, "skip": skip, "limit": limit}
+
+
+        CommonsDep = Annotated[dict, Depends(common_parameters)]
+
+
+        @app.get("/items/")
+        async def read_items(commons: CommonsDep):
+            return commons
+
+
+        @app.get("/users/")
+        async def read_users(commons: CommonsDep):
+            return commons
+    ```
+-   We can have dependencies in hiearchy, which means a depandable can also depend on something, by such way we can create a dependency in depth as much as needed.
+-   Example:
+    ```
+        from typing import Annotated
+
+        from fastapi import Cookie, Depends, FastAPI
+
+        app = FastAPI()
+
+
+        def query_extractor(q: str | None = None):
+            return q
+
+
+        def query_or_cookie_extractor(
+            q: Annotated[str, Depends(query_extractor)],
+            last_query: Annotated[str | None, Cookie()] = None,
+        ):
+            if not q:
+                return last_query
+            return q
+
+
+        @app.get("/items/")
+        async def read_query(
+            query_or_default: Annotated[str, Depends(query_or_cookie_extractor)],
+        ):
+            return {"q_or_cookie": query_or_default}
+    ```
+-   If we have the same dependency decalred at multiple places, fastapi will store the result of its execution when it gets executed once and then this result will be used whenever need in dependencies.
+-   This result of dependencies are stored as cache so that no need to execute same thing again and again.
+-   It can also be controlled by setting value of param use_cache = False, this will flush the cache value and execute callable object every time needed.
+```
+    async def needy_dependency(fresh_value: Annotated[str, Depends(get_value, use_cache=False)]):
+        return {"fresh_value": fresh_value}
+```
+-   There may be a case where we do not want to return anything from our dependencies, we can do that by declaring the dependencies in path operation decorator.
+-   The path operation function has param 'dependencies' which is optional but it can accept list of `Depends`.
+    ```
+    from typing import Annotated
+
+    from fastapi import Depends, FastAPI, Header, HTTPException
+
+    app = FastAPI()
+
+
+    async def verify_token(x_token: Annotated[str, Header()]):
+        if x_token != "fake-super-secret-token":
+            raise HTTPException(status_code=400, detail="X-Token header invalid")
+
+
+    async def verify_key(x_key: Annotated[str, Header()]):
+        if x_key != "fake-super-secret-key":
+            raise HTTPException(status_code=400, detail="X-Key header invalid")
+        return x_key
+
+
+    @app.get("/items/", dependencies=[Depends(verify_token), Depends(verify_key)])
+    async def read_items():
+        return [{"item": "Foo"}, {"item": "Bar"}]
+    ```
+
+-   In order to declare the dependencies for the whole application we can do:
+    `app = FastAPI(dependencies=[Depends(verify_token), Depends(verify_key)])`.
+-   If you want something to perform after the path operation function or after the response is created we can do that by using the yield in the dependencies or depandable objects.
+-   Example:
+    ```
+        async def get_db():
+            db = DBSession()
+            try:
+                yield db
+            finally:
+                db.close()
+            ```
+
+### Database connection
+-   We are going to use the Postgres as the Database to connect to our application.
+-   With FastAPI we can use SQlModel which is built on top of SQLAlchemy and Pydantic. Or we can directly use the SQLAlchemy.
+-   SQLModel has module named `engine` from SQLAlchemy which is used to maintain connection to the database.
