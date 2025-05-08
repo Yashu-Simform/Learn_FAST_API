@@ -1,6 +1,30 @@
 from pydantic import BaseModel, EmailStr, Field, ValidationError, field_validator
 from string import punctuation
 import re
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+from sqlalchemy import ForeignKey, Text
+from datetime import datetime
+from typing import List
+
+class Base(DeclarativeBase):
+    created_at: Mapped[datetime] = mapped_column(default=datetime.now())
+    updated_at: Mapped[datetime] = mapped_column(default=datetime.now())
+
+
+class User(Base):
+    __tablename__ = 'users'
+    id: Mapped[int] = mapped_column(primary_key=True, nullable=False)
+    username: Mapped[str] = mapped_column(nullable=False)
+    email: Mapped[str] = mapped_column(nullable=False)
+    comments: Mapped[List["Comment"]] = relationship(back_populates="users")
+
+
+class Comment(Base):
+    __tablename__ = 'comments'
+    id: Mapped[int] = mapped_column(primary_key=True, nullable=False)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    text: Mapped[str] = mapped_column(Text)
+    user: Mapped[User] = relationship(back_populates="comments")
 
 class BankClient(BaseModel):
     username: str

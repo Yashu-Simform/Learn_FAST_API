@@ -101,7 +101,7 @@ def get_bank_client_data(file_path = './bank_clients.json') -> list[BankClient]:
         return bank_clients_array
     
 
-from db_connections import DBConnection
+from SQLAlchemy_prac.db_connections import DBConnection
 
 db_inst = DBConnection()
-db_inst.connect()
+db_inst.create_engine()

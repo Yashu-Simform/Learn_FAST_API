@@ -2,6 +2,7 @@ from sqlalchemy.engine import create_engine, Engine
 from dotenv import load_dotenv, get_key
 from pydantic_core import MultiHostUrl
 from pydantic import PostgresDsn
+from sqlalchemy.orm import Session
 
 class DBConnectionMetaClass(type):
     """
@@ -35,7 +36,23 @@ class DBConnection(metaclass=DBConnectionMetaClass):
             path=self.db_path
         )
 
-    def connect(self, p_db_url: str = None) -> Engine:
-        if not p_db_url:
-            p_db_url = str(self.get_db_connection_url())
-        self.engine = create_engine(p_db_url)
+    def create_engine(self, p_db_url: str = None):
+        if not (hasattr(self, "engine") and isinstance(self.engine, Engine)):
+            if not p_db_url:
+                p_db_url = str(self.get_db_connection_url())
+            self.engine = create_engine(p_db_url)
+            print('Engine object is now available. Access it using "instance.engine".')
+        else:
+            print('Engine object is already created.')
+
+    def create_session(self) -> Session:
+        """
+            Create a session object for the db and binds the created engine.
+        """
+        if hasattr(self, "engine") and self.engine and isinstance(self.engine, Engine):
+            session = Session(bind=self.engine)
+        else:
+            print('Engine object was not available, so creating it ...')
+            self.create_engine()
+            session = Session(bind=self.engine)
+        return session
